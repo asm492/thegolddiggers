@@ -1,0 +1,20 @@
+#!/bin/sh
+#Sjekker om BALANCER, www1 og 2, ba lever
+while true; do
+
+
+#www1
+if curl -s --head --request GET 192.168.132.147 | grep "200 OK" > /dev/null; then
+:
+else
+cd ~
+source IMT3003_V20_group25-openrc.sh
+openstack server start www1
+./discord.sh --text "@everyone WWW1 ISSA NO RESPOND, ISSA DON'T WORRY, I START AGIAN 4 U!" | date  >> siteuptime.txt;
+fi
+
+sh                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ep 120;
+
+done;
+
+
