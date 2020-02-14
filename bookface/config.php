@@ -7,5 +7,4 @@ $dbpassw = '';
 $webhost = "10.212.140.71";
 $weburl = 'http://' . $webhost ;
 $frontpage_limit = "500";
-}
 ?>
