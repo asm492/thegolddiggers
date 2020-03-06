@@ -12,5 +12,5 @@ sudo docker swarm join --token SWMTKN-1-27hr8uptn2kc5e24lha7syhu8feo37d03efvc3oa
 sudo mkdir -p /etc/docker/certs.d/manager:5000
 sudo cp ~/thegolddiggers/scripts/registry_certs/domain.cert /etc/docker/certs.d/manager:5000/ca.crt
 sudo service docker restart
-echo "192.168.130.196 manager" >> /etc/hosts
+sudo echo "192.168.130.196 manager" >> /etc/hosts
 sudo docker pull manager:5000/bf:latest
