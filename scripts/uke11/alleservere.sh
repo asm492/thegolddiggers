@@ -1,3 +1,4 @@
+
 #!/bin/bash
 #Kjøres på alle servere
 sudo apt-get -y install glusterfs-server glusterfs-client
