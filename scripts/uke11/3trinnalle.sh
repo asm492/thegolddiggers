@@ -1,6 +1,8 @@
 #!/bin/bash
 #TRINN 5, kjøres på alle servere
 
+#Kjøres via crontab på reboot
+
 #manager 192.168.130.196
 #docker2 192.168.129.102
 #docker3 192.168.128.138
