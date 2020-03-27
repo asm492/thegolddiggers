@@ -6,91 +6,84 @@ import argparse
 
 VERBOSE = 0
 DEBUG = 0
+
 ITERATIONS = 7
-BACKUP_FOLDER = "backups/"
-CONFIG = "backup-policy.conf"
+BACKUP_FOLDER = "/backups/"
+CONFIG = "/etc/backup.conf"
 
-SCP_USER = "root@"
+SCP_USER = "ubuntu@"
 
-#################
-# Parse arguments
-
+###########################################
+# Extra stuff
 parser = argparse.ArgumentParser(prog='pull_backup.py')
-parser.add_argument('-v','--verbose',dest="verbose",help="Turn verbosity on",default=False,action="store_true")
-parser.add_argument('-d','--debug',dest="debug",help="Turn debug info on",default=False,action="store_true")
-parser.add_argument('-c','--config',dest="config",help="Where to find the backup policy file",metvar="FILE",default=CONFIG)
-parser.add_argument('-i','--iterations',dest="iterations",type=int,help="How many iterations of the backup folders?",metavar="N",default=ITERATIONS)
-parser.add_argument('-b',"--backup_directory",dest="backup_dir",help="Where to put the backup files",metavar="FOLDER",default=BACKUP_FOLDER)
-
+parser.add_argument('-v','--verbose',dest="verbose",help='Turn verbosity on',default=False,action="store_true")
+parser.add_argument('-d','--debug',dest="debug",help='Turn debug_messages on',default=False,action="store_true")
+parser.add_argument('-c','--config',dest="config", help='What config file to use', metavar="FILE",default=CONFIG)
+parser.add_argument('-i','--iterations',dest="iterations",type=int, help='How many backup iterations to do', metavar="N",default=7)
+parser.add_argument('-b','--backup-directory',dest="backup_folder", help="Where to keep the backup files", metavar="FOLDER",default=BACKUP_FOLDER)
 arguments = parser.parse_args()
 
 VERBOSE = arguments.verbose
 DEBUG = arguments.debug
 ITERATIONS = arguments.iterations
-BACKUP_FOLDER = arguments.backup_dir
-#caster til string
+BACKUP_FOLDER = arguments.backup_folder
 CONFIG = str(arguments.config)
-
-##########
+##########################################
 
 def verbose(text):
-    if VERBOSE:
-        print text
-
+    if VERBOSE :
+        print text 
+    
 def debug(text):
-    if DEBUG:
+    if DEBUG :
         print text
-
-verbose("Verbose is enabled")
-debug("Debug is enabled")
-
-verbose("Opening config file: " + CONFIG)
+    
+verbose("Opening config file: " + CONFIG);
 with open(CONFIG) as config:
     for line in config:
-        debug("Read line: " + line)
+        verbose("Read line: " + line)
         configlist = line.split(":")
         pathlist = configlist[1].split(",")
+        verbose("host: " + configlist[0] )
         host = configlist[0]
-        verbose("Host is: " + host)
-
-        # 0. Check for backup folder
+        
+        # step 0: Check there is a backup folder
         host_backup_path = BACKUP_FOLDER + host
-        if not os.path.isdir(host_backup_path)
-            verbose("Creating host backup directory: " + host_backup_path)
+        if not os.path.isdir(host_backup_path):
+            verbose("Creating backup folder " + host_backup_path)
             os.makedirs(host_backup_path)
-
-        # 1. Remove oldest version (reverse rotation)
-        if os.path.isdir(host_backup_path + "." + str(ITEERATIONS)):
-            verbose("Deleting oldest version of backup dir")
+        
+        # Step 1: remove the oldest folder
+        if os.path.isdir(host_backup_path + "." + str(ITERATIONS)):
+            verbose("Deleting oldest version of backup directories")
             shutil.rmtree(host_backup_path + "." + str(ITERATIONS))
-
-        # 2. Move folders up one step
-        # Starts at ITERATIONS-1 ; i > 0 ; i--
+            
+        # step 2: move the other folders up
         for i in range((ITERATIONS - 1),0,-1):
+            debug("Checking if " + str(i) + "th folder exists")
             if os.path.isdir(host_backup_path + "." + str(i)):
-                verbose("Moving " + host_backup_path + " from " + " to " + str(i + 1))
-                shutil.move(host_backup_path + "." + stl(i),host_backup_path + "." + str(i + 1))
+                verbose("Moving " + host_backup_path + " from " + str(i) + " to " + str(i + 1))
+                shutil.move(host_backup_path + "." + str(i),host_backup_path + "." + str(i + 1))
+                
+            
+        # step 3: cp -al the current folder
 
-        # 3. cp -al current folder.
+        # shutil.copytree(host_backup_path, host_backup_path + ".1", copy_function=os.link)
         verbose("Copying main folder with hard links")
-        # -a prøver å beholde metadata om eier. -l lager hardlinks
-        # kopi fra dagen før:
-        os.system("cp -al + host_backup_path + " " + host_backup_path + ".1"
+        os.system("cp -al " +  host_backup_path + " " + host_backup_path + ".1")
 
-        # 4. sync current foler from remote server
+        # step 4: sync the current folder
         verbose("Synchronizing folders")
         for folder in pathlist:
-
-            #vasker streng for usnynlige tegn feks \n
             folder = folder.rstrip()
             verbose("-> " + folder)
             if not os.path.isdir(host_backup_path + folder):
                 os.makedirs(host_backup_path + folder)
+            
+            verbose_rsync = "v" if VERBOSE else ""    
+            os.system("rsync -a" + verbose_rsync + " --delete " + SCP_USER + host + ":" + folder + " " + host_backup_path + folder)
+        
 
-            verbose_rsync = ""
-            if VERBOSE:
-                verbose_rsync = "v"
-
-            command = "rsync -a" + verbose_rsync + " --delete " + SCP_USER + host + ":" + folder + " " + host_backup_path + folder
-            debug("Running: " + command)
-            os.system(command)
+        
+        
+    
